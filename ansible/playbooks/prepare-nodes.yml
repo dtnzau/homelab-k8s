@@ -1,0 +1,115 @@
+---
+- name: Prepare all nodes for Kubernetes
+  hosts: k8s_cluster
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Display node information
+      debug:
+        msg: "Preparing {{ inventory_hostname }} ({{ ansible_host }}) - Role: {{ node_role }}"
+    
+    - name: Set hostname
+      hostname:
+        name: "{{ hostname }}"
+    
+    - name: Update /etc/hosts with cluster nodes
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          # Kubernetes Cluster Nodes
+          192.168.86.101 cp-node-01.lab.local cp-node-01
+          192.168.86.102 worker-node-02.lab.local worker-node-02
+          192.168.86.103 worker-node-03.lab.local worker-node-03
+          192.168.86.200 truenas.lab.local truenas
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - K8S CLUSTER"
+    
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+      register: apt_upgrade
+    
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - software-properties-common
+          - nfs-common
+          - open-iscsi
+          - util-linux
+          - htop
+          - vim
+          - net-tools
+        state: present
+
+    - name: Disable swap immediately
+      shell: |
+        swapoff -a || true
+      changed_when: false
+
+    - name: Remove swap entries from /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^.*swap.*$'
+        state: absent
+    
+    - name: Create modules-load configuration for Kubernetes
+      copy:
+        dest: /etc/modules-load.d/k8s.conf
+        content: |
+          overlay
+          br_netfilter
+        mode: '0644'
+    
+    - name: Load kernel modules immediately
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - overlay
+        - br_netfilter
+    
+    - name: Set sysctl parameters for Kubernetes
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_file: /etc/sysctl.d/k8s.conf
+        reload: yes
+      loop:
+        - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+        - { name: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+        - { name: 'net.ipv4.ip_forward', value: '1' }
+    
+    - name: Disable UFW firewall (homelab environment)
+      systemd:
+        name: ufw
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+    
+    - name: Reboot if kernel was upgraded
+      reboot:
+        msg: "Rebooting due to kernel upgrade"
+        reboot_timeout: 300
+      when: apt_upgrade.changed and 'linux-image' in apt_upgrade.stdout
+    
+    - name: Wait for system to become reachable
+      wait_for_connection:
+        delay: 30
+        timeout: 300
+      when: apt_upgrade.changed and 'linux-image' in apt_upgrade.stdout
+    
+    - name: Display completion message
+      debug:
+        msg: "Node {{ inventory_hostname }} prepared successfully!"

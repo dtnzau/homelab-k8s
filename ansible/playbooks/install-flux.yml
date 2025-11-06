@@ -1,0 +1,46 @@
+---
+- name: Prepare for FluxCD installation
+  hosts: control_plane
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Copy kubeconfig to management VM
+      fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: /tmp/admin.conf
+        flat: yes
+      
+    - name: Display instructions for FluxCD installation
+      debug:
+        msg:
+          - "============================================"
+          - "Kubernetes cluster is ready for FluxCD!"
+          - "============================================"
+          - ""
+          - "Next steps to install FluxCD:"
+          - ""
+          - "1. On your management VM, run:"
+          - "   mkdir -p ~/.kube"
+          - "   cp /tmp/admin.conf ~/.kube/config"
+          - "   chmod 600 ~/.kube/config"
+          - ""
+          - "2. Verify cluster access:"
+          - "   kubectl get nodes"
+          - ""
+          - "3. Export GitHub credentials:"
+          - "   export GITHUB_TOKEN=<your-github-personal-access-token>"
+          - "   export GITHUB_USER=<your-github-username>"
+          - ""
+          - "4. Bootstrap FluxCD:"
+          - "   flux bootstrap github \\"
+          - "     --owner=${GITHUB_USER} \\"
+          - "     --repository=homelab-k8s \\"
+          - "     --branch=main \\"
+          - "     --path=kubernetes/clusters/homelab \\"
+          - "     --personal"
+          - ""
+          - "5. Verify FluxCD installation:"
+          - "   flux check"
+          - "   kubectl get pods -n flux-system"
+          - ""

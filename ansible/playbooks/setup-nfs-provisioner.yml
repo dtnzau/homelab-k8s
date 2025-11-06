@@ -1,0 +1,244 @@
+---
+- name: Setup NFS Subdir External Provisioner
+  hosts: control_plane
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Verify nodes are Ready before proceeding
+      shell: |
+        kubectl get nodes --no-headers | grep -v "NotReady" | wc -l
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: ready_nodes_check
+      failed_when: ready_nodes_check.stdout|int < 3
+      changed_when: false
+    
+    - name: Display node status
+      shell: kubectl get nodes
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: nodes_status
+      changed_when: false
+    
+    - name: Show nodes
+      debug:
+        var: nodes_status.stdout_lines
+    
+    - name: Create nfs-provisioner namespace
+      shell: kubectl create namespace nfs-provisioner
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: ns_create
+      failed_when: ns_create.rc != 0 and 'AlreadyExists' not in ns_create.stderr
+      changed_when: ns_create.rc == 0
+    
+    - name: Create RBAC for NFS provisioner
+      shell: |
+        kubectl apply -f - <<RBAC
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: nfs-client-provisioner
+          namespace: nfs-provisioner
+        ---
+        kind: ClusterRole
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: nfs-client-provisioner-runner
+        rules:
+          - apiGroups: [""]
+            resources: ["nodes"]
+            verbs: ["get", "list", "watch"]
+          - apiGroups: [""]
+            resources: ["persistentvolumes"]
+            verbs: ["get", "list", "watch", "create", "delete"]
+          - apiGroups: [""]
+            resources: ["persistentvolumeclaims"]
+            verbs: ["get", "list", "watch", "update"]
+          - apiGroups: ["storage.k8s.io"]
+            resources: ["storageclasses"]
+            verbs: ["get", "list", "watch"]
+          - apiGroups: [""]
+            resources: ["events"]
+            verbs: ["create", "update", "patch"]
+        ---
+        kind: ClusterRoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: run-nfs-client-provisioner
+        subjects:
+          - kind: ServiceAccount
+            name: nfs-client-provisioner
+            namespace: nfs-provisioner
+        roleRef:
+          kind: ClusterRole
+          name: nfs-client-provisioner-runner
+          apiGroup: rbac.authorization.k8s.io
+        ---
+        kind: Role
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: leader-locking-nfs-client-provisioner
+          namespace: nfs-provisioner
+        rules:
+          - apiGroups: [""]
+            resources: ["endpoints"]
+            verbs: ["get", "list", "watch", "create", "update", "patch"]
+        ---
+        kind: RoleBinding
+        apiVersion: rbac.authorization.k8s.io/v1
+        metadata:
+          name: leader-locking-nfs-client-provisioner
+          namespace: nfs-provisioner
+        subjects:
+          - kind: ServiceAccount
+            name: nfs-client-provisioner
+            namespace: nfs-provisioner
+        roleRef:
+          kind: Role
+          name: leader-locking-nfs-client-provisioner
+          apiGroup: rbac.authorization.k8s.io
+        RBAC
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+    
+    - name: Create NFS provisioner deployment
+      shell: |
+        kubectl apply -f - <<DEPLOYMENT
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: nfs-client-provisioner
+          namespace: nfs-provisioner
+          labels:
+            app: nfs-client-provisioner
+        spec:
+          replicas: 1
+          strategy:
+            type: Recreate
+          selector:
+            matchLabels:
+              app: nfs-client-provisioner
+          template:
+            metadata:
+              labels:
+                app: nfs-client-provisioner
+            spec:
+              serviceAccountName: nfs-client-provisioner
+              containers:
+                - name: nfs-client-provisioner
+                  image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+                  volumeMounts:
+                    - name: nfs-client-root
+                      mountPath: /persistentvolumes
+                  env:
+                    - name: PROVISIONER_NAME
+                      value: k8s-sigs.io/nfs-subdir-external-provisioner
+                    - name: NFS_SERVER
+                      value: {{ nfs_server }}
+                    - name: NFS_PATH
+                      value: {{ nfs_path }}
+              volumes:
+                - name: nfs-client-root
+                  nfs:
+                    server: {{ nfs_server }}
+                    path: {{ nfs_path }}
+        DEPLOYMENT
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+    
+    - name: Create StorageClass
+      shell: |
+        kubectl apply -f - <<STORAGECLASS
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: nfs-client
+          annotations:
+            storageclass.kubernetes.io/is-default-class: "true"
+        provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+        parameters:
+          archiveOnDelete: "true"
+          pathPattern: "\${.PVC.namespace}/\${.PVC.name}"
+        reclaimPolicy: Retain
+        volumeBindingMode: Immediate
+        allowVolumeExpansion: true
+        STORAGECLASS
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+    
+    - name: Wait for NFS provisioner deployment to be created
+      shell: |
+        kubectl get deployment nfs-client-provisioner -n nfs-provisioner
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: nfs_deployment
+      retries: 10
+      delay: 5
+      until: nfs_deployment.rc == 0
+      changed_when: false
+    
+    - name: Wait for NFS provisioner to be ready
+      shell: |
+        kubectl wait --for=condition=available --timeout=300s deployment/nfs-client-provisioner -n nfs-provisioner
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      retries: 3
+      delay: 20
+      register: nfs_ready
+      until: nfs_ready.rc == 0
+      failed_when: false
+    
+    - name: Check NFS provisioner pod status if deployment failed
+      shell: |
+        kubectl get pods -n nfs-provisioner -o wide
+        echo "---"
+        kubectl describe deployment nfs-client-provisioner -n nfs-provisioner | tail -20
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: nfs_debug
+      when: nfs_ready.rc != 0
+      changed_when: false
+    
+    - name: Display NFS provisioner debug info
+      debug:
+        var: nfs_debug.stdout_lines
+      when: nfs_ready.rc != 0 and nfs_debug is defined
+    
+    - name: Display NFS provisioner status
+      shell: kubectl get deployment -n nfs-provisioner
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: nfs_status
+      changed_when: false
+    
+    - name: Show NFS provisioner status
+      debug:
+        var: nfs_status.stdout_lines
+    
+    - name: Display StorageClass
+      shell: kubectl get storageclass
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: sc_status
+      changed_when: false
+    
+    - name: Show StorageClass
+      debug:
+        var: sc_status.stdout_lines
+    
+    - name: Display completion summary
+      debug:
+        msg:
+          - "=========================================="
+          - "✓ NFS Storage Provisioner Setup Complete!"
+          - "=========================================="
+          - ""
+          - "NFS Server: {{ nfs_server }}"
+          - "NFS Path: {{ nfs_path }}"
+          - "Default StorageClass: nfs-client"
+          - ""
+          - "Test with:"
+          - "  kubectl apply -f test-pvc.yaml"
+          - "=========================================="

@@ -1,0 +1,44 @@
+---
+- name: Complete Kubernetes Cluster Deployment
+  hosts: all
+  gather_facts: yes
+  
+  tasks:
+    - name: Display deployment start message
+      debug:
+        msg:
+          - "=========================================="
+          - "Starting Kubernetes Cluster Deployment"
+          - "=========================================="
+          - "Control Plane: {{ groups['control_plane'] }}"
+          - "Workers: {{ groups['workers'] }}"
+          - "=========================================="
+      run_once: true
+
+- import_playbook: prepare-nodes.yml
+- import_playbook: install-k8s.yml
+- import_playbook: bootstrap-cluster.yml
+- import_playbook: setup-nfs-provisioner.yml
+- import_playbook: install-flux.yml
+
+- name: Display deployment completion
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Show completion message
+      debug:
+        msg:
+          - "=========================================="
+          - "✓ Kubernetes Cluster Deployed Successfully!"
+          - "=========================================="
+          - ""
+          - "Your cluster is ready with:"
+          - "  - Flannel CNI"
+          - "  - NFS storage provisioner (TrueNAS)"
+          - "  - 1 control plane + 2 worker nodes"
+          - ""
+          - "Kubeconfig copied to: /tmp/admin.conf"
+          - ""
+          - "Next: Install FluxCD for GitOps!"
+          - "=========================================="

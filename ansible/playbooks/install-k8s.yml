@@ -1,0 +1,106 @@
+---
+- name: Install containerd and Kubernetes
+  hosts: k8s_cluster
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Display installation info
+      debug:
+        msg: "Installing Kubernetes {{ kubernetes_version }} on {{ inventory_hostname }}"
+    
+    # Install containerd
+    - name: Install containerd and dependencies
+      apt:
+        name:
+          - containerd
+          - runc
+        state: present
+        update_cache: yes
+    
+    - name: Create containerd config directory
+      file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+    
+    - name: Check if containerd config exists
+      stat:
+        path: /etc/containerd/config.toml
+      register: containerd_config
+    
+    - name: Generate default containerd configuration
+      shell: containerd config default > /etc/containerd/config.toml
+      when: not containerd_config.stat.exists
+    
+    - name: Configure containerd to use systemd cgroup driver
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: 'SystemdCgroup = false'
+        replace: 'SystemdCgroup = true'
+      notify: restart containerd
+    
+    - name: Enable and start containerd service
+      systemd:
+        name: containerd
+        state: started
+        enabled: yes
+        daemon_reload: yes
+    
+    # Install Kubernetes packages
+    - name: Create APT keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+    
+    - name: Check if Kubernetes GPG key exists
+      stat:
+        path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      register: k8s_gpg_key
+    
+    - name: Add Kubernetes APT GPG key
+      shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | \
+        gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      when: not k8s_gpg_key.stat.exists
+    
+    - name: Add Kubernetes APT repository
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /"
+        state: present
+        filename: kubernetes
+        update_cache: yes
+    
+    - name: Install Kubernetes packages
+      apt:
+        name:
+          - "kubelet={{ kubernetes_version_rhel_package }}"
+          - "kubeadm={{ kubernetes_version_rhel_package }}"
+          - "kubectl={{ kubernetes_version_rhel_package }}"
+        state: present
+        update_cache: yes
+    
+    - name: Hold Kubernetes packages at current version
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+    
+    - name: Enable kubelet service
+      systemd:
+        name: kubelet
+        enabled: yes
+    
+    - name: Display completion message
+      debug:
+        msg: "Kubernetes {{ kubernetes_version }} installed successfully on {{ inventory_hostname }}"
+  
+  handlers:
+    - name: restart containerd
+      systemd:
+        name: containerd
+        state: restarted
