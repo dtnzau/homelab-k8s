@@ -1,0 +1,30 @@
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+# Ansible
+*.retry
+ansible/inventory/hosts.yml
+ansible/inventory/group_vars/all.yml
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# SSH Keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+
+# Secrets
+secrets/
+*secret*.yaml
