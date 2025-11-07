@@ -30,8 +30,9 @@ spec:
           protocol: TCP
         
         env:
+        # Allow access from Cloudflare tunnel hostname
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: "0.0.0.0"
+          value: "home.lab.ripcloud.io"
         
         volumeMounts:
         - name: config
