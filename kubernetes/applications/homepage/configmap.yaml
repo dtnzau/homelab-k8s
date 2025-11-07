@@ -91,3 +91,4 @@ data:
   
   docker.yaml: ""
   kubernetes.yaml: ""
+  proxmox.yaml: ""
