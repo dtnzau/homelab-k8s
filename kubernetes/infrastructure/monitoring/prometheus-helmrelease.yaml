@@ -42,7 +42,7 @@ spec:
     
     grafana:
       enabled: true
-      adminPassword: admin
+      adminPassword: ${NEW_GRAFANA_PASSWORD}
       persistence:
         enabled: true
         storageClassName: nfs-client
@@ -50,7 +50,6 @@ spec:
       service:
         type: LoadBalancer
       
-      # Enable anonymous access for public dashboard sharing
       grafana.ini:
         auth.anonymous:
           enabled: true
