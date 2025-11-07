@@ -8,6 +8,11 @@ data:
     title: Homelab K8s
     theme: dark
     color: slate
+    headerStyle: boxed
+    layout:
+      Services:
+        style: row
+        columns: 3
   
   services.yaml: |
     - Services:
@@ -25,9 +30,44 @@ data:
             icon: nginx.svg
             href: https://demo.lab.ripcloud.io
             description: Demo Application
+        
+        - GitHub Repo:
+            icon: github.svg
+            href: https://github.com/dtnzau/homelab-k8s
+            description: Source Code
   
-  widgets.yaml: ""
-  bookmarks.yaml: ""
+  widgets.yaml: |
+    - logo:
+        icon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/kubernetes.svg
+    
+    - greeting:
+        text_size: xl
+        text: "Welcome to Homelab K8s"
+    
+    - datetime:
+        text_size: l
+        format:
+          timeStyle: short
+          dateStyle: short
+          hour12: false
+  
+  bookmarks.yaml: |
+    - Documentation:
+        - Kubernetes:
+            - icon: kubernetes.svg
+              href: https://kubernetes.io/docs/
+        - FluxCD:
+            - icon: flux.svg
+              href: https://fluxcd.io/docs/
+    
+    - Tools:
+        - GitHub:
+            - icon: github.svg
+              href: https://github.com
+        - Cloudflare:
+            - icon: cloudflare.svg
+              href: https://dash.cloudflare.com
+  
   docker.yaml: ""
   kubernetes.yaml: ""
   proxmox.yaml: ""
