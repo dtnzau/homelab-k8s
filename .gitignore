@@ -28,3 +28,10 @@ id_ed25519*
 # Secrets
 secrets/
 *secret*.yaml
+
+# Allow SealedSecrets (encrypted, safe for git)
+!**/sealed-secret.yaml
+!**/*-sealed.yaml
+
+# Allow public certificates
+!pub-sealed-secrets.pem
