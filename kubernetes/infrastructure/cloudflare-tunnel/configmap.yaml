@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: cloudflare-tunnel
+  labels:
+    app: cloudflared
+data:
+  config.yaml: |
+    # Tunnel identifier - must match your tunnel name in Cloudflare
+    tunnel: homelab-k8s-tunnel
+    
+    # Path to credentials file (mounted from secret)
+    credentials-file: /etc/cloudflared/token.json
+    
+    # Metrics server for monitoring (optional but recommended)
+    metrics: 0.0.0.0:2000
+    
+    # Logging
+    loglevel: info
+    
+    # Ingress rules define how traffic is routed
+    # Format: hostname -> Kubernetes service URL
+    ingress:
+      # Homepage - your landing page dashboard
+      - hostname: home.lab.ripcloud.io
+        service: http://homepage.homepage.svc.cluster.local:80
+        # Explanation:
+        # - hostname: External domain users visit
+        # - service: Internal Kubernetes service
+        #   Format: http://<service-name>.<namespace>.svc.cluster.local:<port>
+      
+      # Grafana - metrics visualization
+      - hostname: grafana.lab.ripcloud.io
+        service: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
+        # Note: Service name comes from Helm release
+        # kube-prometheus-stack is the release name
+        # -grafana is appended by the chart
+      
+      # Prometheus - metrics collection
+      - hostname: prometheus.lab.ripcloud.io
+        service: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+        # Note: Prometheus typically runs on port 9090
+      
+      # Alertmanager - alert management
+      - hostname: alertmanager.lab.ripcloud.io
+        service: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+      
+      # Demo nginx application
+      - hostname: demo.lab.ripcloud.io
+        service: http://nginx-demo.default.svc.cluster.local:80
+        # Note: This service is in the 'default' namespace
+      
+      # Uptime Kuma - status monitoring (when you deploy it)
+      - hostname: status.lab.ripcloud.io
+        service: http://uptime-kuma.uptime-kuma.svc.cluster.local:3001
+      
+      # Kubernetes Dashboard (when you deploy it)
+      - hostname: dashboard.lab.ripcloud.io
+        service: http://kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local:443
+        originServerName: kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local
+        # Note: Dashboard uses HTTPS, so we specify originServerName
+      
+      # ArgoCD (when you deploy it)
+      - hostname: argocd.lab.ripcloud.io
+        service: http://argocd-server.argocd.svc.cluster.local:80
+      
+      # Harbor container registry (when you deploy it)
+      - hostname: harbor.lab.ripcloud.io
+        service: http://harbor.harbor.svc.cluster.local:80
+      
+      # Catch-all rule - MUST be last entry
+      # Returns 404 for any unmatched hostname
+      - service: http_status:404
