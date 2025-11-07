@@ -39,6 +39,7 @@ spec:
               resources:
                 requests:
                   storage: 10Gi
+    
     grafana:
       enabled: true
       adminPassword: admin
@@ -48,3 +49,23 @@ spec:
         size: 5Gi
       service:
         type: LoadBalancer
+      
+      # Enable anonymous access for public dashboard sharing
+      grafana.ini:
+        auth.anonymous:
+          enabled: true
+          org_name: "Main Org."
+          org_role: Viewer
+        
+        server:
+          root_url: https://grafana.lab.ripcloud.io
+          serve_from_sub_path: false
+        
+        security:
+          allow_embedding: true
+          cookie_samesite: lax
+        
+        users:
+          allow_sign_up: false
+          auto_assign_org: true
+          auto_assign_org_role: Viewer
