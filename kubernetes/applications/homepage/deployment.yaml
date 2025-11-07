@@ -19,6 +19,22 @@ spec:
       serviceAccountName: homepage
       enableServiceLinks: false
       
+      # Init container to copy config and make it writable
+      initContainers:
+      - name: copy-config
+        image: busybox:latest
+        command:
+        - sh
+        - -c
+        - |
+          cp /tmp/configmap/* /app/config/ 2>/dev/null || true
+          chmod -R 777 /app/config
+        volumeMounts:
+        - name: config-source
+          mountPath: /tmp/configmap
+        - name: config
+          mountPath: /app/config
+      
       containers:
       - name: homepage
         image: ghcr.io/gethomepage/homepage:latest
@@ -30,7 +46,6 @@ spec:
           protocol: TCP
         
         env:
-        # Allow access from Cloudflare tunnel hostname
         - name: HOMEPAGE_ALLOWED_HOSTS
           value: "home.lab.ripcloud.io"
         
@@ -49,8 +64,10 @@ spec:
             memory: 512Mi
       
       volumes:
-      - name: config
+      - name: config-source
         configMap:
           name: homepage-config
+      - name: config
+        emptyDir: {}
       - name: logs
         emptyDir: {}
