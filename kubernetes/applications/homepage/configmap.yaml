@@ -44,6 +44,11 @@ data:
             icon: homepage.svg
             href: https://home.lab.ripcloud.io
             description: This Dashboard
+        
+        - GitHub Repo:
+            icon: github.svg
+            href: https://github.com/dtnzau/homelab-k8s
+            description: Source Code
   
   widgets.yaml: |
     - logo:
@@ -58,18 +63,11 @@ data:
         format:
           timeStyle: short
           dateStyle: short
+          hour12: false
     
-    - kubernetes:
-        cluster:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
-        nodes:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
+    - search:
+        provider: google
+        target: _blank
   
   bookmarks.yaml: |
     - Documentation:
@@ -79,6 +77,9 @@ data:
         - FluxCD Docs:
             - icon: flux.svg
               href: https://fluxcd.io/docs/
+        - Grafana Docs:
+            - icon: grafana.svg
+              href: https://grafana.com/docs/
     
     - Resources:
         - GitHub:
@@ -89,5 +90,4 @@ data:
               href: https://dash.cloudflare.com/
   
   docker.yaml: ""
-  kubernetes.yaml: |
-    mode: cluster
+  kubernetes.yaml: ""
