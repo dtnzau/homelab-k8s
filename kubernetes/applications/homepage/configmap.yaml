@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: homepage
+data:
+  settings.yaml: |
+    title: Homelab K8s
+    theme: dark
+    color: slate
+    headerStyle: boxed
+    layout:
+      Monitoring:
+        style: row
+        columns: 3
+      Services:
+        style: row
+        columns: 3
+      Infrastructure:
+        style: row
+        columns: 3
+    
+  services.yaml: |
+    - Monitoring:
+        - Grafana:
+            icon: grafana.svg
+            href: https://grafana.lab.ripcloud.io
+            description: Metrics & Dashboards
+            widget:
+              type: grafana
+              url: https://grafana.lab.ripcloud.io
+              username: admin
+              password: admin
+        
+        - Prometheus:
+            icon: prometheus.svg
+            href: https://prometheus.lab.ripcloud.io
+            description: Metrics Collection
+            widget:
+              type: prometheus
+              url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+        
+        - Alertmanager:
+            icon: https://raw.githubusercontent.com/prometheus/alertmanager/main/doc/arch.svg
+            href: https://alertmanager.lab.ripcloud.io
+            description: Alert Management
+    
+    - Services:
+        - Nginx Demo:
+            icon: nginx.svg
+            href: https://demo.lab.ripcloud.io
+            description: Demo Application
+        
+        - Uptime Kuma:
+            icon: uptime-kuma.svg
+            href: https://status.lab.ripcloud.io
+            description: Status Page
+        
+        - Homepage:
+            icon: homepage.svg
+            href: https://home.lab.ripcloud.io
+            description: This Dashboard
+    
+    - Infrastructure:
+        - Kubernetes Dashboard:
+            icon: kubernetes-dashboard.svg
+            href: https://dashboard.lab.ripcloud.io
+            description: K8s Management
+        
+        - Harbor Registry:
+            icon: harbor.svg
+            href: https://harbor.lab.ripcloud.io
+            description: Container Registry
+        
+        - ArgoCD:
+            icon: argocd.svg
+            href: https://argocd.lab.ripcloud.io
+            description: GitOps Deployment
+  
+  widgets.yaml: |
+    - logo:
+        icon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/kubernetes.svg
+    
+    - greeting:
+        text_size: xl
+        text: "Welcome to Homelab K8s"
+    
+    - datetime:
+        text_size: l
+        format:
+          timeStyle: short
+          dateStyle: short
+          hour12: false
+    
+    - resources:
+        cpu: true
+        memory: true
+        cputemp: true
+        uptime: true
+        disk: /
+    
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+  
+  bookmarks.yaml: |
+    - Documentation:
+        - Kubernetes Docs:
+            - icon: kubernetes.svg
+              href: https://kubernetes.io/docs/
+        - FluxCD Docs:
+            - icon: https://fluxcd.io/img/logos/flux-horizontal-color.svg
+              href: https://fluxcd.io/docs/
+        - Grafana Docs:
+            - icon: grafana.svg
+              href: https://grafana.com/docs/
+    
+    - Resources:
+        - GitHub:
+            - icon: github.svg
+              href: https://github.com/dtnzau/homelab-k8s
+        - Cloudflare:
+            - icon: cloudflare.svg
+              href: https://dash.cloudflare.com/
+  
+  docker.yaml: ""
+  kubernetes.yaml: |
+    mode: cluster
