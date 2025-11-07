@@ -4,3 +4,7 @@ resources:
   - metallb/namespace.yaml
   - metallb/helmrelease.yaml
   - metallb/ipaddresspool.yaml
+  - cloudflare-tunnel/namespace.yaml
+  - cloudflare-tunnel/sealed-secret.yaml
+  - cloudflare-tunnel/configmap.yaml
+  - cloudflare-tunnel/deployment.yaml
