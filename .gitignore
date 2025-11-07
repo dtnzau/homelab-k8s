@@ -33,5 +33,5 @@ secrets/
 !**/sealed-secret.yaml
 !**/*-sealed.yaml
 
-# Allow public certificates
-!pub-sealed-secrets.pem
+# Ignore Public certificate
+pub-sealed-secrets.pem
