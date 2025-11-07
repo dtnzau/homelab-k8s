@@ -30,7 +30,6 @@ spec:
           protocol: TCP
         
         env:
-        # Allow requests from any host (for Cloudflare tunnel and k8s probes)
         - name: HOMEPAGE_ALLOWED_HOSTS
           value: "0.0.0.0"
         
@@ -47,22 +46,6 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
-        
-        livenessProbe:
-          httpGet:
-            path: /api/healthcheck
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 5
-        
-        readinessProbe:
-          httpGet:
-            path: /api/healthcheck
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 5
       
       volumes:
       - name: config
