@@ -6,3 +6,4 @@ resources:
   - homepage/serviceaccount.yaml
   - homepage/deployment.yaml
   - homepage/service.yaml
+  - demo-app/deployment.yaml

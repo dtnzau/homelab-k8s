@@ -4,7 +4,7 @@ metadata:
   name: nginx-demo
   namespace: default
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: nginx-demo
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:alpine
+        image: nginx:latest
         ports:
         - containerPort: 80
 ---
@@ -25,9 +25,9 @@ metadata:
   name: nginx-demo
   namespace: default
 spec:
-  type: LoadBalancer
+  selector:
+    app: nginx-demo
   ports:
   - port: 80
     targetPort: 80
-  selector:
-    app: nginx-demo
+  type: ClusterIP
