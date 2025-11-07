@@ -8,17 +8,9 @@ data:
     title: Homelab K8s
     theme: dark
     color: slate
-    headerStyle: boxed
-    layout:
-      Monitoring:
-        style: row
-        columns: 3
-      Services:
-        style: row
-        columns: 3
-    
+  
   services.yaml: |
-    - Monitoring:
+    - Services:
         - Grafana:
             icon: grafana.svg
             href: https://grafana.lab.ripcloud.io
@@ -29,66 +21,13 @@ data:
             href: https://prometheus.lab.ripcloud.io
             description: Metrics Collection
         
-        - Alertmanager:
-            icon: si-prometheus
-            href: https://alertmanager.lab.ripcloud.io
-            description: Alert Management
-    
-    - Services:
         - Nginx Demo:
             icon: nginx.svg
             href: https://demo.lab.ripcloud.io
             description: Demo Application
-        
-        - Homepage:
-            icon: homepage.svg
-            href: https://home.lab.ripcloud.io
-            description: This Dashboard
-        
-        - GitHub Repo:
-            icon: github.svg
-            href: https://github.com/dtnzau/homelab-k8s
-            description: Source Code
   
-  widgets.yaml: |
-    - logo:
-        icon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/kubernetes.svg
-    
-    - greeting:
-        text_size: xl
-        text: "Welcome to Homelab K8s"
-    
-    - datetime:
-        text_size: l
-        format:
-          timeStyle: short
-          dateStyle: short
-          hour12: false
-    
-    - search:
-        provider: google
-        target: _blank
-  
-  bookmarks.yaml: |
-    - Documentation:
-        - Kubernetes Docs:
-            - icon: kubernetes.svg
-              href: https://kubernetes.io/docs/
-        - FluxCD Docs:
-            - icon: flux.svg
-              href: https://fluxcd.io/docs/
-        - Grafana Docs:
-            - icon: grafana.svg
-              href: https://grafana.com/docs/
-    
-    - Resources:
-        - GitHub:
-            - icon: github.svg
-              href: https://github.com/dtnzau/homelab-k8s
-        - Cloudflare:
-            - icon: cloudflare.svg
-              href: https://dash.cloudflare.com/
-  
+  widgets.yaml: ""
+  bookmarks.yaml: ""
   docker.yaml: ""
   kubernetes.yaml: ""
   proxmox.yaml: ""
