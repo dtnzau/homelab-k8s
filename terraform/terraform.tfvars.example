@@ -3,7 +3,7 @@ ssh_user             = "k8s-admin"
 ssh_private_key_path = "~/.ssh/id_ed25519"
 
 # TrueNAS NFS Configuration
-truenas_nfs_server = "192.168.86.200"  # Update with your TrueNAS IP
+truenas_nfs_server = "192.168.86.200"
 truenas_nfs_path   = "/mnt/ssd-pool/k8s-storage"
 
 # Kubernetes Configuration
