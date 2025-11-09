@@ -7,18 +7,14 @@ Self-hosted infrastructure environment for learning cloud-native technologies an
 
 **Hardware:**
 - 3x HPE bare metal nodes (1x control plane, 2x worker nodes)
-- TrueNAS server for NFS storage
+- TrueNAS server for NFS storage (PV)
 
 **Core Technologies:**
 - **Container Orchestration:** Kubernetes
 - **Infrastructure as Code:** Terraform, Ansible, Helm
 - **GitOps:** Flux, GitHub
-
-## Current Projects
-
-- **Kubernetes Cluster:** Production-style K8s setup for hands-on learning
-- **GitOps Workflows:** Automated deployments using Flux
-- **Infrastructure Automation:** Terraform and Ansible configurations for reproducible infrastructure
+- **Networking:** Flannel CNI, Cloudflare Tunnel
+- **Monitoring:** Prometheus, Grafana
 
 ## Learning Goals
 
