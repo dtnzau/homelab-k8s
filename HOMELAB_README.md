@@ -28,5 +28,10 @@ Self-hosted infrastructure environment for learning cloud-native technologies an
 - **Live Environment:** https://home.lab.ripcloud.io/
 - **Code Repository:** https://github.com/dtnzau/homelab-k8s
 
+## Other Projects
+- https://nc.ripcloud.io/
+- https://photos.ripcloud.io/
+- https://ai.ripcloud.io/
+
 ---
 
